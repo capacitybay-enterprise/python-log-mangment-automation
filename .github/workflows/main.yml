@@ -5,13 +5,13 @@ on:
     - cron: "*/5 * * * *" 
   workflow_dispatch:
 env:
-      SERVER_IP:             ${{ secrets.SERVER_IP }}
-      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION:            ${{ secrets.AWS_REGION }}
-      BUCKET:                ${{ secrets.BUCKET }}
-      SSH_USER:              ${{ secrets.SSH_USER }}
-      KEY_FILE:              ec2-key.pem
+  SERVER_IP:             ${{ secrets.SERVER_IP }}
+  AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION:            ${{ secrets.AWS_REGION }}
+  BUCKET:                ${{ secrets.BUCKET }}
+  SSH_USER:              ${{ secrets.SSH_USER }}
+  KEY_FILE:              ec2-key.pem
       
 jobs:
   download_logs:
