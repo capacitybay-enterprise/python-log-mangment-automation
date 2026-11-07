@@ -34,5 +34,8 @@ jobs:
         run: |
           printf '%s\n' "$EC2_SSH_KEY" > ec2-key.pem
           chmod 600 ec2-key.pem
+
+      - name: 6. Download from EC2 and upload to S3
+        run: |
+          python download.py
           ls -la
-          cat ec2-key.pem
