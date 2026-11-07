@@ -2,20 +2,25 @@ name: Nginx log Download and Backup
 
 on:
   schedule:
-    - cron: "*/5 * * * *" 
-  workflow_dispatch:
-env:
-  SERVER_IP:             ${{ secrets.SERVER_IP }}
+    - cron: "*/5 * * * *"        # every 5 minutes (GitHub's minimum) – for testing only
+  workflow_dispatch:             # adds a "Run workflow" button
+
+concurrency:
+  group: nginx-log-backup        # never run two backups at the same time
+
+env:                             # shared by both jobs
   AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION:            ${{ secrets.AWS_REGION }}
-  BUCKET:                ${{ secrets.BUCKET }}
-  SSH_USER:              ${{ secrets.SSH_USER }}
-  KEY_FILE:              ec2-key.pem
-      
+
 jobs:
+  # ------------------------------------------------------------ JOB 1: EC2 → runner
   download_logs:
     runs-on: ubuntu-latest
+    env:
+      SERVER_IP: ${{ secrets.SERVER_IP }}
+      SSH_USER:  ${{ secrets.SSH_USER }}
+      KEY_FILE:  ec2-key.pem
 
     steps:
       - name: 1. Get the code
@@ -36,41 +41,43 @@ jobs:
           printf '%s\n' "$EC2_SSH_KEY" > ec2-key.pem
           chmod 600 ec2-key.pem
 
-      - name: 6. Download from EC2 and upload to S3
+      - name: 5. Download the log from EC2
         run: |
           python download.py
           ls -la
-          
-      - name: 7. Save access.log for the next job
+
+      - name: 6. Save access.log for the next job
         uses: actions/upload-artifact@v4
         with:
           name: nginx-log
           path: access.log
           retention-days: 1
-          
-      - name: 9. Delete the key file
+
+      - name: 7. Delete the key file
         if: always()
         run: rm -f ec2-key.pem
 
+  # ------------------------------------------------------------ JOB 2: runner → S3
+  upload:
+    runs-on: ubuntu-latest
+    needs: download_logs         # wait for JOB 1 to succeed
+    env:
+      BUCKET: ${{ secrets.BUCKET }}
 
-   upload:
-      runs-on: ubuntu-latest
-      needs: download_logs
-  
-      steps:
-        - name: 1. Get the code
-          uses: actions/checkout@v4
-  
-        - name: 2. Install Python
-          uses: actions/setup-python@v5
-          with:
-            python-version: "3.12"
-  
-        - name: 3. Install boto3 and paramiko
-          run: pip install -r requirements.txt
-  
-        - name: 4. Get access.log from the download job
-          uses: actions/download-artifact@v4
+    steps:
+      - name: 1. Get the code
+        uses: actions/checkout@v4
+
+      - name: 2. Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 3. Install boto3 and paramiko
+        run: pip install -r requirements.txt
+
+      - name: 4. Get access.log from the download job
+        uses: actions/download-artifact@v4
         with:
           name: nginx-log
 
