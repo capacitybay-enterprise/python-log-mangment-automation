@@ -53,24 +53,24 @@ jobs:
         run: rm -f ec2-key.pem
 
 
- upload:
-    runs-on: ubuntu-latest
-    needs: download_logs
-
-    steps:
-      - name: 1. Get the code
-        uses: actions/checkout@v4
-
-      - name: 2. Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: 3. Install boto3 and paramiko
-        run: pip install -r requirements.txt
-
-      - name: 4. Get access.log from the download job
-        uses: actions/download-artifact@v4
+   upload:
+      runs-on: ubuntu-latest
+      needs: download_logs
+  
+      steps:
+        - name: 1. Get the code
+          uses: actions/checkout@v4
+  
+        - name: 2. Install Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: "3.12"
+  
+        - name: 3. Install boto3 and paramiko
+          run: pip install -r requirements.txt
+  
+        - name: 4. Get access.log from the download job
+          uses: actions/download-artifact@v4
         with:
           name: nginx-log
 
